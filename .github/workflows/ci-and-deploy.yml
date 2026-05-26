@@ -1,0 +1,58 @@
+name: CI and Pages Deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  validate:
+    name: Validate repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (for npx html-validator)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Ensure index.html exists
+        run: |
+          if [ ! -f "index.html" ]; then
+            echo "ERROR: index.html not found in repository root.";
+            exit 1;
+          fi
+          echo "index.html found"
+
+      - name: Run HTML validator (best-effort)
+        run: |
+          echo "Attempting to run html-validator via npx (best-effort)."
+          # Use npx --yes to avoid prompts. This step is non-fatal by default.
+          npx --yes html-validator --file=index.html --verbose || true
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          # Publish the repository root. If your site files are in a subfolder (e.g. docs/), change this.
+          path: ./
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v1
+
