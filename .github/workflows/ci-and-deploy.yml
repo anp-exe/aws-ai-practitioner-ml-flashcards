@@ -47,14 +47,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Deploy to GitHub Pages via gh-pages branch
-        # Using an alternative deploy action to avoid workflows that pull in the deprecated
-        # actions/upload-artifact@v3. This action will push the site to the `gh-pages` branch.
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          # The branch the action will deploy to. GitHub Pages can be configured to serve from this branch.
-          branch: gh-pages
-          # The folder to publish (repository root). Change to `docs/` or build output if needed.
-          folder: ./
-          clean: true
+      - name: Deploy to gh-pages branch (manual, no external deploy action)
+        # This custom step performs a direct git push to the gh-pages branch using the
+        # built-in GITHUB_TOKEN. It avoids external actions that may transitively use
+        # deprecated actions/upload-artifact@v3.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          echo "Preparing deploy directory"
+          # Create a clean output directory and copy site files (exclude workflow files and .git)
+          rm -rf out
+          mkdir out
+          shopt -s dotglob || true
+          # Copy everything except .github and .git
+          for f in * .*; do
+            case "$f" in
+              .|..|.git|.github) continue ;;
+              *) cp -R "$f" out/ || true ;;
+            esac
+          done
+
+          cd out
+          # Initialize a new repo to avoid history issues and create gh-pages branch
+          git init
+          git checkout -b gh-pages
+          git add -A
+          git commit -m "Deploy site: ${GITHUB_SHA}"
+
+          echo "Pushing to gh-pages branch"
+          # Use the token to push. The x-access-token username avoids exposing actor name.
+          git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git" gh-pages
 
