@@ -1,6 +1,6 @@
  # aws-ai-practitioner-ml-flashcards
 
-[![AWS](https://img.shields.io/badge/AWS-Amazon%20Web%20Services-orange?style=for-the-badge)](https://aws.amazon.com)
+[![AWS AI Practitioner](https://img.shields.io/badge/AWS%20AI%20Practitioner-ff9900?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/certification/)
 [![AI](https://img.shields.io/badge/AI-Machine%20Learning-blueviolet?style=for-the-badge)](https://en.wikipedia.org/wiki/Artificial_intelligence)
 
 A small static site of ML/AI flashcards intended to help learn core concepts for the AWS AI Practitioner and related machine learning topics. The site is a single-page static HTML site (`index.html`) and is published via GitHub Pages.

@@ -43,6 +43,8 @@ jobs:
     needs: validate
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -54,24 +56,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -e
+          set -euo pipefail
           echo "Preparing deploy directory"
-          # Create a clean output directory and copy site files (exclude workflow files and .git)
-          rm -rf out
-          mkdir out
-          shopt -s dotglob || true
-          # Copy everything except .github and .git
-          for f in * .*; do
-            case "$f" in
-              .|..|.git|.github) continue ;;
-              *) cp -R "$f" out/ || true ;;
-            esac
-          done
+          STAGING_DIR="$(mktemp -d)"
 
-          cd out
-          # Initialize a new repo to avoid history issues and create gh-pages branch
-          git init
-          git checkout -b gh-pages
+          # Copy site files into a temporary directory outside the repo so we never
+          # recurse into the deploy folder itself.
+          rsync -a \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.DS_Store' \
+            ./ "${STAGING_DIR}/"
+
+          cd "${STAGING_DIR}"
+          git init -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "Deploy site: ${GITHUB_SHA}"
 
