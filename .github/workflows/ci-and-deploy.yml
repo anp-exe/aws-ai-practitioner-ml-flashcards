@@ -47,13 +47,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Upload Pages artifact
-        # Use v2 which avoids deprecated upload-artifact v3 internals
-        uses: actions/upload-pages-artifact@v2
+      - name: Deploy to GitHub Pages via gh-pages branch
+        # Using an alternative deploy action to avoid workflows that pull in the deprecated
+        # actions/upload-artifact@v3. This action will push the site to the `gh-pages` branch.
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          # Publish the repository root. If your site files are in a subfolder (e.g. docs/), change this.
-          path: ./
-
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v1
+          # The branch the action will deploy to. GitHub Pages can be configured to serve from this branch.
+          branch: gh-pages
+          # The folder to publish (repository root). Change to `docs/` or build output if needed.
+          folder: ./
+          clean: true
 
